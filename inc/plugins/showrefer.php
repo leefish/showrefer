@@ -17,7 +17,7 @@ function showrefer_info()
 		"author"	=> "LeeFish based on work by Jeff Chan",
 		"authorsite"	=> "http://www.leefish.nl",
 		"version"	=> "1.1",
-		'compatibility' => "*"
+		'compatibility' => "18"
 	);
 }
 
