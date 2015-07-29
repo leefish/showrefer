@@ -3,6 +3,17 @@ if(!defined("IN_MYBB"))
 {
     die("This file cannot be accessed directly.");
 } 
+// Credits: DennisTT for PM function, Rakes for query optimisation and name format, JeffChan for the 1.4 plugin 
+// Neat trick for caching our custom template(s)
+if(my_strpos($_SERVER['PHP_SELF'], 'member.php'))
+{
+	global $templatelist;
+	if(isset($templatelist))
+	{
+		$templatelist .= ',';
+	}
+	$templatelist .= 'member_profile_showrefer';
+}
 
 $plugins->add_hook('member_profile_end', 'showrefer');
 $plugins->add_hook("member_do_register_end", "showrefer_send_pm");
@@ -14,10 +25,11 @@ function showrefer_info()
 		"name"		=> "Referral in Profile",
 		"description"	=> "This plugin displays the user's referrals in their profiles.",
 		"website"	=> "http://www.leefish.nl",
-		"author"	=> "LeeFish based on work by Jeff Chan",
+		"author"	=> "LeeFish",
 		"authorsite"	=> "http://www.leefish.nl",
 		"version"	=> "1.1",
-		'compatibility' => "18"
+		'compatibility' => "18",
+		"codename" => "leefish_showrefer"
 	);
 }
 
@@ -69,15 +81,11 @@ function showrefer_deactivate()
 	find_replace_templatesets("member_profile", '#(\n?){\$showrefer}(\n?)#', '', 0);
 }
 
-// This function runs when the plugin is deactivated.
+// This function runs when the plugin is uninstalled.
 function showrefer_uninstall()
 {
     global $db;
 
-	// Remove code from template
-	require_once MYBB_ROOT."/inc/adminfunctions_templates.php";
-	find_replace_templatesets("member_profile", '#(\n?){\$showrefer}(\n?)#', '', 0);
-	
 	//Delete Referrals in Profiles template
 	$db->delete_query("templates", "`title` = 'member_profile_showrefer'");
 	
