@@ -1,4 +1,4 @@
 <?php
-$l['referrer'] = "Referred by: ";
-$l['no_referrer'] = "No-one";
+$l['referrals'] = "Referrals: ";
+$l['no_referrals'] = "No-one";
 ?>
