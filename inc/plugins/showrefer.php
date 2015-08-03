@@ -76,7 +76,9 @@ function showrefer_uninstall()
 
 function showrefer()
 {
-	global $mybb, $templates, $db, $theme, $showrefer, $showrefer_referrals, $memprofile;
+	global $mybb, $templates, $db, $theme, $showrefer, $showrefer_referrals, $memprofile, $lang;
+	
+	$lang->load("showrefer");
 	
 	if ($memprofile['referrals'] > 0) 
 	{
@@ -88,8 +90,17 @@ function showrefer()
 	
 		while($referral = $db->fetch_array($query))
 		{
-		    $avatar = htmlspecialchars_uni($referral['avatar']);
-			$showrefer_referrals .= $sep.build_profile_link(format_name(htmlspecialchars_uni($referral['username']), $referral['usergroup'], $referral['displaygroup']), $referral['uid']); 
+
+			if (!empty($referral['avatar'])){
+			
+				$avatar = htmlspecialchars_uni($referral['avatar']);
+				
+			} else {
+			
+				$avatar= $mybb->settings['bburl'].'/images/default_avatar.png';
+			}
+		    $useravatar = "<img src='$avatar' width='20px' height='20px' style='margin-right:5px'/>";
+			$showrefer_referrals .= $sep.$useravatar.build_profile_link(format_name(htmlspecialchars_uni($referral['username']), $referral['usergroup'], $referral['displaygroup']), $referral['uid']); 
 
 			$sep = ", ";
 				
