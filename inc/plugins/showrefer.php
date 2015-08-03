@@ -2,38 +2,27 @@
 if(!defined("IN_MYBB"))
 {
     die("This file cannot be accessed directly.");
-} 
-// Credits: DennisTT for PM function, Rakes for query optimisation and name format, JeffChan for the 1.4 plugin 
-// Neat trick for caching our custom template(s)
-if(my_strpos($_SERVER['PHP_SELF'], 'member.php'))
-{
-	global $templatelist;
-	if(isset($templatelist))
-	{
-		$templatelist .= ',';
-	}
-	$templatelist .= 'member_profile_showrefer';
 }
+
+// Credits: DennisTT for PM function, Rakes for query optimisation and name format, JeffChan for the 1.4 version
 
 $plugins->add_hook('member_profile_end', 'showrefer');
 $plugins->add_hook("member_do_register_end", "showrefer_send_pm");
 
-// The information that shows up on the plugin manager
 function showrefer_info()
 {
 	return array(
-		"name"		=> "Referral in Profile",
-		"description"	=> "This plugin displays the user's referrals in their profiles.",
+		"name"		=> "Show Referrals in Profile",
+		"description"	=> "This plugin displays the user's referrals (who they referred) in their profiles.",
 		"website"	=> "http://www.leefish.nl",
 		"author"	=> "LeeFish",
 		"authorsite"	=> "http://www.leefish.nl",
 		"version"	=> "1.1",
-		'compatibility' => "18",
-		"codename" => "leefish_showrefer"
+		"compatibility" => "18",
+		"codename" => "leefish_showrefer"	
 	);
 }
 
-// This function is called to establish whether the plugin is installed or not
 function showrefer_is_installed()
 {
 	global $db;
@@ -47,134 +36,128 @@ function showrefer_is_installed()
 	return false;
 }
 
-function showrefer_install() {
+function showrefer_install() 
+{
 	global $db;
 
 	$showrefer_template = array(
 		"title"		=> 'member_profile_showrefer',
 		"template"	=> "<tr>
-	<td class=\"trow1\ \"valign = top\"><strong>Referrals ({\$showrefer_count})</strong></td>
+	<td class=\"trow1\ \"valign = top\"><strong>Referrals ({\$memprofile[\'referrals\']})</strong></td>
 	<td class=\"trow1\">{\$showrefer_referrals}</td>
 </tr>",
 		"sid"		=> -1,
-		"version"	=> 120,
-		"status"	=> '',
-		"dateline"	=> 1134703642,
+		"version"	=> 1800,
+		"dateline"	=> TIME_NOW,
 	);
-	//Create Referrals in Profiles template
 	$db->insert_query('templates', $showrefer_template);
 }
 
-// This function runs when the plugin is activated.
 function showrefer_activate()
 {
-	// Insert code into profile template
 	require_once MYBB_ROOT."/inc/adminfunctions_templates.php";
-	find_replace_templatesets("member_profile", '#{\$reputation}#', "{\$reputation}\n{\$showrefer}\n");
+	find_replace_templatesets("member_profile", '#{\$referrals}#', '{\$showrefer}');
 }
 
-// This function runs when the plugin is deactivated.
 function showrefer_deactivate()
 {
-	// Remove code from template
 	require_once MYBB_ROOT."/inc/adminfunctions_templates.php";
-	find_replace_templatesets("member_profile", '#(\n?){\$showrefer}(\n?)#', '', 0);
+	find_replace_templatesets("member_profile", '#{\$showrefer}#', '{\$referrals}', 0);
 }
 
-// This function runs when the plugin is uninstalled.
 function showrefer_uninstall()
 {
     global $db;
 
-	//Delete Referrals in Profiles template
 	$db->delete_query("templates", "`title` = 'member_profile_showrefer'");
 	
-	//Rebuild settings.php
 	rebuild_settings();
 }
 
 function showrefer()
 {
-	global $mybb, $templates, $db, $theme, $showrefer_count, $showrefer, $showrefer_referrals;
+	global $mybb, $templates, $db, $theme, $showrefer, $showrefer_referrals, $memprofile;
 	
-	$query = $db->write_query("
-				SELECT u.*, u.username, u.uid, u.referrer, u.referrals, u.avatar
-				FROM ".TABLE_PREFIX."users u
-				WHERE u.referrer > '0'
-				AND u.referrer = '".intval($mybb->input['uid'])."'
-				");			
-				
-	$showrefer_count = $db->num_rows($query);
-	
-	
-	
-	if($showrefer_count > 0)
+	if ($memprofile['referrals'] > 0) 
 	{
-		$sep = "";
+	$referrer = (int)$mybb->input['uid'];
+	
+	$query = $db->simple_select("users", "uid,username,usergroup,displaygroup,avatar,referrer,referrals" , "referrer = '$referrer'");
+		
+	$sep = "";
+	
 		while($referral = $db->fetch_array($query))
 		{
-		    $avatar = htmlspecialchars_uni($referrals['avatar']);
-			$showrefer_referrals .= $sep.$avatar.build_profile_link($referral['username'],$referral['uid']);
+		    $avatar = htmlspecialchars_uni($referral['avatar']);
+			$showrefer_referrals .= $sep.build_profile_link(format_name(htmlspecialchars_uni($referral['username']), $referral['usergroup'], $referral['displaygroup']), $referral['uid']); 
+
 			$sep = ", ";
-			
-			
-        	}
-	}
-	else
+				
+        }	
+	} 
+	else 
 	{
+	
 		$showrefer_referrals = "None";
 	}
 	eval("\$showrefer = \"".$templates->get('member_profile_showrefer')."\";");
+	
 }
 function showrefer_send_pm()
-    {   
-	
+{   
 	global $lang, $mybb, $db,$user,$user_info,$plugins;
 	
-		if($user['referrer'] != "" && isset($user_info)) {
-			//Fetch Referrer Information
-			$query = $db->simple_select("users", "uid,username" , "`username`='".$user['referrer']."'");
-			$refers = $db->fetch_array($query);
-			//Set newly registered user information (Referral)
-			$toid = $refers['uid'];
-			$newb = $user_info;
-			$new_username = $newb['username'];
-			$new_uid = $newb['uid'];
-			$newblink = "[URL=".$mybb->settings['bburl']."/member.php?action=profile&uid=".$newb['uid']."]".$newb['username']."[/URL]";
+	//Get the user and user info from the registration.
+	if($user['referrer'] != "" && isset($user_info)) 
+	{
 
-			require_once MYBB_ROOT."inc/datahandlers/pm.php";
-			$pmhandler = new PMDataHandler();
-			$pmhandler->admin_override = true;
-				$pm = array(
-				"subject" => "New member referred by you.",
-				"message" => "Thanks for referring me. Check out my profile $newblink :) ",
-				"icon" => "-1",
-				"toid" => $toid,
-				"fromid" => $new_uid,
-				"do" => '',
-				"pmid" => ''
-			);
-			$pm['options'] = array(
-				"signature" => "0",
-				"disablesmilies" => "0",
-				"savecopy" => "0",
-				"readreceipt" => "0"
-			);
+		$referrer = htmlspecialchars($user['referrer']);
 		
-			$pmhandler->set_data($pm);
-					
-			if(!$pmhandler->validate_pm())
-			{
-				// No PM :(
-			}
-			else
-			{
-				$pminfo = $pmhandler->insert_pm();
-			}
-		} 
+		//Fetch Referrer uid
+
+		$query = $db->simple_select("users", "uid,username" , "username = '".$db->escape_string($referrer)."'");
+		
+		$refers = $db->fetch_array($query);
+		
+		//Set newly registered user information for the pm to referrer	
+		$toid = (int)$refers['uid'];
+		$new_uid = (int)$user_info['uid'];
+		$new_user = htmlspecialchars($user_info['username']);
+		
+		//Style link as BB Code for PM
+		$newblink = "[URL=".$mybb->settings['bburl']."/member.php?action=profile&uid=".$user_info['uid']."]".$user_info['username']."[/URL]";
+
+		require_once MYBB_ROOT."inc/datahandlers/pm.php";
+		$pmhandler = new PMDataHandler();
+		
+		//PM will always be sent regardless of receivers settings
+		$pmhandler->admin_override = true;
+			$pm = array(
+			"subject" => "New member referred by you.",
+			"message" => "Thanks for referring me. Check out my profile $newblink ",
+			"icon" => "-1",
+			"toid" => $toid,
+			"fromid" => $new_uid,
+			"do" => '',
+			"pmid" => ''
+		);
+			$pm['options'] = array(
+			"signature" => "0",
+			"disablesmilies" => "0",
+			"savecopy" => "0",
+			"readreceipt" => "0"
+		);
+	
+		$pmhandler->set_data($pm);
+				
+		if(!$pmhandler->validate_pm())
+		{
+			// No PM :(
+		}
 		else
 		{
-			//do nothing
+			$pminfo = $pmhandler->insert_pm();
 		}
-	}
+	} 
+}
 ?>
