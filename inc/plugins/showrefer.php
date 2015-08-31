@@ -43,7 +43,7 @@ function showrefer_install()
 	$showrefer_template = array(
 		"title"		=> 'member_profile_showrefer',
 		"template"	=> "<tr>
-	<td class=\"trow1\" \"valign = top\"><strong>Referrals ({\$memprofile[\'referrals\']})</strong></td>
+	<td class=\"trow1\" valign = \"top\"><strong>Referrals ({\$memprofile[\'referrals\']})</strong></td>
 	<td class=\"trow1\">{\$showrefer_referrals}</td>
 </tr>",
 		"sid"		=> -1,
