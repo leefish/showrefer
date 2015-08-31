@@ -97,9 +97,11 @@ function showrefer()
 				
 			} else {
 			
-				$avatar= $mybb->settings['bburl'].'/images/default_avatar.png';
+				$avatar = $mybb->settings['bburl'] . '/' . $mybb->settings['useravatar'];
 			}
+			
 		    $useravatar = "<img src='$avatar' width='20px' height='20px' style='margin-right:5px'/>";
+			
 			$showrefer_referrals .= $sep.$useravatar.build_profile_link(format_name(htmlspecialchars_uni($referral['username']), $referral['usergroup'], $referral['displaygroup']), $referral['uid']); 
 
 			$sep = ", ";
