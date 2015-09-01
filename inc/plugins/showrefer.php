@@ -29,11 +29,11 @@ function showrefer_is_installed()
 	
 	$query = $db->simple_select("templates", "`title`", "`title` = 'member_profile_showrefer'");
 	$g = $db->fetch_array($query);
-	if($g)
-	{
+	
+	if($g) {
 		return true;
-	}
-	return false;
+		
+	}	return false;
 }
 
 function showrefer_install() 
@@ -43,7 +43,7 @@ function showrefer_install()
 	$showrefer_template = array(
 		"title"		=> 'member_profile_showrefer',
 		"template"	=> "<tr>
-	<td class=\"trow1\" valign = \"top\"><strong>Referrals ({\$memprofile[\'referrals\']})</strong></td>
+	<td class=\"trow1\" valign = \"top\"><strong>{\$lang->referrals} ({\$memprofile[\'referrals\']})</strong></td>
 	<td class=\"trow1\">{\$showrefer_referrals}</td>
 </tr>",
 		"sid"		=> -1,
@@ -80,8 +80,7 @@ function showrefer()
 	
 	$lang->load("showrefer");
 	
-	if ($memprofile['referrals'] > 0) 
-	{
+	if ($memprofile['referrals'] > 0) {
 	$referrer = (int)$mybb->input['uid'];
 	
 	$query = $db->simple_select("users", "uid,username,usergroup,displaygroup,avatar,referrer,referrals" , "referrer = '$referrer'");
@@ -106,12 +105,11 @@ function showrefer()
 
 			$sep = ", ";
 
-        }	
-	} 
-	else 
-	{
+		}	
+		
+	} else	{
 	
-		$showrefer_referrals = "None";
+		$showrefer_referrals = "{$lang->no_referrals}";
 	}
 	eval("\$showrefer = \"".$templates->get('member_profile_showrefer')."\";");
 	
@@ -136,25 +134,29 @@ function showrefer_send_pm()
 		$toid = (int)$refers['uid'];
 		$new_uid = (int)$user_info['uid'];
 		$new_user = htmlspecialchars($user_info['username']);
-		
+				
 		//Style link as BB Code for PM
-		$newblink = "[URL=".$mybb->settings['bburl']."/member.php?action=profile&uid=".$user_info['uid']."]".$user_info['username']."[/URL]";
+		$newblink = '[url='.$mybb->settings['bburl'].'/member.php?action=profile&uid='.$new_uid.']'.$new_user.'[/url]';
+		
+		$pmsubject = "New member referred by you.";
+		$pm_message = "Thanks for referring me. Check out my profile ";
+		$pm_message .= $newblink;
 
 		require_once MYBB_ROOT."inc/datahandlers/pm.php";
 		$pmhandler = new PMDataHandler();
 		
 		//PM will always be sent regardless of receivers settings
 		$pmhandler->admin_override = true;
-			$pm = array(
-			"subject" => "New member referred by you.",
-			"message" => "Thanks for referring me. Check out my profile $newblink ",
+		$pm = array(
+			"subject" => $pmsubject,
+			"message" => $pm_message,
 			"icon" => "-1",
 			"toid" => $toid,
 			"fromid" => $new_uid,
 			"do" => '',
 			"pmid" => ''
 		);
-			$pm['options'] = array(
+		$pm['options'] = array(
 			"signature" => "0",
 			"disablesmilies" => "0",
 			"savecopy" => "0",
@@ -163,12 +165,12 @@ function showrefer_send_pm()
 	
 		$pmhandler->set_data($pm);
 				
-		if(!$pmhandler->validate_pm())
-		{
+		if(!$pmhandler->validate_pm()) {
+		
 			// No PM :(
-		}
-		else
-		{
+			
+		} else 	{
+		
 			$pminfo = $pmhandler->insert_pm();
 		}
 	} 
