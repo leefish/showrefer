@@ -4,7 +4,7 @@ if(!defined("IN_MYBB"))
     die("This file cannot be accessed directly.");
 }
 
-// Credits: DennisTT for PM function, Rakes for query optimisation and name format, JeffChan for the 1.4 version
+// Credits: DennisTT for PM function, Rakes for query optimisation and name format, JeffChan for the 1.4 version, dragonexpert for the is_installed function
 
 $plugins->add_hook('member_profile_end', 'showrefer');
 $plugins->add_hook("member_do_register_end", "showrefer_send_pm");
@@ -25,16 +25,17 @@ function showrefer_info()
 
 function showrefer_is_installed()
 {
-	global $db;
+	global $cache;
 	
-	$query = $db->simple_select("templates", "`title`", "`title` = 'member_profile_showrefer'");
-	$g = $db->fetch_array($query);
-	
-	if($g) {
-		return true;
-		
-	}	return false;
+	$activeplugins = $cache->read("plugins");
+
+	if(array_key_exists("showrefer", $activeplugins['active']))
+	{
+	  return true;
+	}
+	return false;
 }
+
 
 function showrefer_install() 
 {
@@ -43,7 +44,7 @@ function showrefer_install()
 	$showrefer_template = array(
 		"title"		=> 'member_profile_showrefer',
 		"template"	=> "<tr>
-	<td class=\"trow1\" valign = \"top\"><strong>{\$lang->referrals} ({\$memprofile[\'referrals\']})</strong></td>
+	<td class=\"trow1\" valign=\"top\"><strong>{\$lang->referrals} ({\$memprofile[\'referrals\']})</strong></td>
 	<td class=\"trow1\">{\$showrefer_referrals}</td>
 </tr>",
 		"sid"		=> -1,
