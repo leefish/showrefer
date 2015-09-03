@@ -4,7 +4,20 @@ if(!defined("IN_MYBB"))
     die("This file cannot be accessed directly.");
 }
 
-// Credits: DennisTT for PM function, Rakes for query optimisation and name format, JeffChan for the 1.4 version, dragonexpert for the is_installed function
+// Pre-load templates
+global $mybb, $templatelist;
+
+if(THIS_SCRIPT == 'member.php' && $mybb->input['action'] == 'profile')
+{
+	if(isset($templatelist))
+	{
+		$templatelist .= ',';
+	}
+
+	$templatelist .= 'member_profile_showrefer,member_profile_showrefer_avatar';
+}
+
+// Credits: DennisTT for PM function, Rakes for query optimisation and name format, Destroy666 for avatars, JeffChan for the 1.4 version
 
 $plugins->add_hook('member_profile_end', 'showrefer');
 $plugins->add_hook("member_do_register_end", "showrefer_send_pm");
@@ -17,22 +30,24 @@ function showrefer_info()
 		"website"	=> "http://www.leefish.nl",
 		"author"	=> "LeeFish",
 		"authorsite"	=> "http://www.leefish.nl",
-		"version"	=> "1.1",
+		"version"	=> "1.2",
 		"compatibility" => "18",
 		"codename" => "leefish_showrefer"	
 	);
 }
-
 function showrefer_is_installed()
 {
-	global $cache;
+	global $db;
 	
-	$activeplugins = $cache->read("plugins");
-
-	if(array_key_exists("showrefer", $activeplugins['active']))
-	{
-	  return true;
-	}
+	$query = $db->simple_select("templates", "`title`", "`title` = 'member_profile_showrefer'");
+	$g = $db->fetch_array($query);
+	
+	if($g) {
+		
+		return true;
+		
+	}	
+	
 	return false;
 }
 
@@ -40,18 +55,19 @@ function showrefer_is_installed()
 function showrefer_install() 
 {
 	global $db;
+	
+	$showrefer_template['member_profile_showrefer'] ='<tr>
+	<td class=\"trow1\" valign=\"top\"><strong>{\$lang->referrals} ({$memprofile[\'referrals\']})</strong></td>
+	<td class=\"trow1\">{$showrefer_referrals}</td>
+</tr>';
+	$showrefer_template['member_profile_showrefer_avatar'] ='<img src={$useravatar[\'image\']} {$useravatar[\'width_height\']} style="margin-right:5px;max-width:20px;height:auto;"/>';
 
-	$showrefer_template = array(
-		"title"		=> 'member_profile_showrefer',
-		"template"	=> "<tr>
-	<td class=\"trow1\" valign=\"top\"><strong>{\$lang->referrals} ({\$memprofile[\'referrals\']})</strong></td>
-	<td class=\"trow1\">{\$showrefer_referrals}</td>
-</tr>",
-		"sid"		=> -1,
-		"version"	=> 1800,
-		"dateline"	=> TIME_NOW,
-	);
-	$db->insert_query('templates', $showrefer_template);
+
+	foreach($showrefer_template as $title => $template)
+	    {
+	    	$showrefer_template = array('title' => $db->escape_string($title), 'template' => $db->escape_string($template), 'sid' => '-1', 'version' => '1800', 'dateline' => TIME_NOW);
+	    	$db->insert_query('templates', $showrefer_template);
+	    }
 }
 
 function showrefer_activate()
@@ -71,6 +87,7 @@ function showrefer_uninstall()
     global $db;
 
 	$db->delete_query("templates", "`title` = 'member_profile_showrefer'");
+	$db->delete_query("templates", "`title` = 'member_profile_showrefer_avatar'");
 	
 	rebuild_settings();
 }
@@ -82,26 +99,19 @@ function showrefer()
 	$lang->load("showrefer");
 	
 	if ($memprofile['referrals'] > 0) {
+	
 	$referrer = (int)$mybb->input['uid'];
 	
-	$query = $db->simple_select("users", "uid,username,usergroup,displaygroup,avatar,referrer,referrals" , "referrer = '$referrer'");
+	$query = $db->simple_select("users", "uid,username,usergroup,displaygroup,avatar,avatardimensions,referrer,referrals" , "referrer = '$referrer'");
 		
 	$sep = "";
 	
 		while($referral = $db->fetch_array($query))
 		{
-
-			if (!empty($referral['avatar'])){
-			
-				$avatar = htmlspecialchars_uni($referral['avatar']);
-				
-			} else {
-			
-				$avatar = $mybb->settings['bburl'] . '/' . $mybb->settings['useravatar'];
-			}
-			
-		    $useravatar = "<img src='$avatar' width='20px' height='20px' style='margin-right:5px'/>";
-			
+		$useravatar = format_avatar($referral['avatar'], $referral['avatardimensions']);
+		
+		eval("\$useravatar = \"".$templates->get("member_profile_showrefer_avatar")."\";");
+		
 			$showrefer_referrals .= $sep.$useravatar.build_profile_link(format_name(htmlspecialchars_uni($referral['username']), $referral['usergroup'], $referral['displaygroup']), $referral['uid']); 
 
 			$sep = ", ";
