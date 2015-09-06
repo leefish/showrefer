@@ -129,6 +129,8 @@ function showrefer_send_pm()
 {   
 	global $lang, $mybb, $db,$user,$user_info,$plugins;
 	
+	$lang->load("showrefer");
+	
 	//Get the user and user info from the registration.
 	if($user['referrer'] != "" && isset($user_info)) 
 	{
@@ -186,4 +188,3 @@ function showrefer_send_pm()
 		}
 	} 
 }
-?>
