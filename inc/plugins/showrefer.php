@@ -20,7 +20,7 @@ if(THIS_SCRIPT == 'member.php' && $mybb->input['action'] == 'profile')
 // Credits: DennisTT for PM function, Rakes for query optimisation and name format, Destroy666 for avatars, JeffChan for the 1.4 version
 
 $plugins->add_hook('member_profile_end', 'showrefer');
-$plugins->add_hook("member_do_register_end", "showrefer_send_pm");
+$plugins->add_hook("member_do_register_end", "showrefer_sendpm");
 
 function showrefer_info()
 {
@@ -40,9 +40,9 @@ function showrefer_is_installed()
 	global $db;
 	
 	$query = $db->simple_select("templates", "`title`", "`title` = 'member_profile_showrefer'");
-	$g = $db->fetch_array($query);
+	$installed = $db->fetch_array($query);
 	
-	if($g) {
+	if($installed) {
 		
 		return true;
 		
@@ -125,7 +125,7 @@ function showrefer()
 	eval("\$showrefer = \"".$templates->get('member_profile_showrefer')."\";");
 	
 }
-function showrefer_send_pm()
+function showrefer_sendpm()
 {   
 	global $lang, $mybb, $db,$user,$user_info,$plugins;
 	
