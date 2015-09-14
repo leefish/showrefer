@@ -9,7 +9,11 @@ MyBB version 1.8
 
 #Installation
 
-Upload the content of the "upload" folder to your MyBB root folder.
+Upload the inc folder to your MyBB root folder.
 Go to ACP -> Configuration -> Plugins and activate/install the plugin.
+
+Uninstall/Deactivate
+
+The templates for this plugin are removedon uninstall, NOT on deactivate.
 
 Enjoy!
